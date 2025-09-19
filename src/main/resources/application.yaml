@@ -1,0 +1,41 @@
+# Spring Boot Logging Configuration
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    com.ecoomerce.sportscenter: DEBUG
+
+server:
+  port: 8080
+
+spring:
+  main:
+    allow-circular-references: true
+  datasource:
+    url: jdbc:mysql://localhost:3307/sonmaidb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 123456
+  application:
+    name: SonMaiApp
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 123456
+
+# VNPay Configuration
+vnpay:
+  url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  tmn-code: YOUR_TMN_CODE
+  hash-secret: YOUR_HASH_SECRET
+  return-url: http://localhost:8080/api/checkout/vnpay/return
+  version: 2.1.0
