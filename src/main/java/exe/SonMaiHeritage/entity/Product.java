@@ -25,6 +25,10 @@ public class Product {
     private Long price;
     @Column(name="PictureUrl")
     private String pictureUrl;
+    
+    @Column(name="Quantity")
+    @Builder.Default
+    private Integer quantity = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name= "ProductTypeId", referencedColumnName = "Id")

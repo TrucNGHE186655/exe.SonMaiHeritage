@@ -65,4 +65,8 @@ public class ProductController {
         List<ProductResponse> productResponses = productService.searchProductsByName(keyword);
         return new ResponseEntity<>(productResponses, HttpStatus.OK);
     }
+
+    // Admin endpoints đã được chuyển sang AdminController
+    // Chỉ giữ lại các public endpoints cho khách hàng xem sản phẩm
+
 }

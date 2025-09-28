@@ -12,7 +12,7 @@ public class VnPayConfig {
     private String returnUrl;
     private String version;
 
-    // Getters and Setters
+
     public String getUrl() {
         return url;
     }

@@ -1,5 +1,6 @@
 package exe.SonMaiHeritage.service;
 
+import exe.SonMaiHeritage.model.ProductRequest;
 import exe.SonMaiHeritage.model.ProductResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,4 +12,9 @@ public interface ProductService {
     Page<ProductResponse> getProducts(Pageable pageable);
     List<ProductResponse> searchProductsByName(String keyword);
     List<ProductResponse> searchProductsByType(Integer typeId);
+    ProductResponse createProduct(ProductRequest request);
+    ProductResponse updateProduct(Integer id, ProductRequest request);
+    void deleteProduct(Integer id);
+    boolean checkProductAvailability(Integer productId, Integer requestedQuantity);
+    void updateProductQuantity(Integer productId, Integer quantityChange);
 }

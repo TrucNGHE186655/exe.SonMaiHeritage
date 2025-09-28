@@ -35,7 +35,7 @@ spring:
 # VNPay Configuration
 vnpay:
   url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  tmn-code: YOUR_TMN_CODE
-  hash-secret: YOUR_HASH_SECRET
+  tmn-code: 1WYM2STA
+  hash-secret: WGK5BAKL721LOMUN38E6TDRGWRIWM999
   return-url: http://localhost:8080/api/checkout/vnpay/return
   version: 2.1.0

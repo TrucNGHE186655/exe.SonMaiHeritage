@@ -1,5 +1,6 @@
 package exe.SonMaiHeritage.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,8 +26,8 @@ public class Order {
     private String orderCode;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "guest_customer_id")
+    private GuestCustomer guestCustomer;
     
     @Column(name="total_amount")
     private Long totalAmount;
@@ -48,6 +49,7 @@ public class Order {
     private LocalDateTime updatedDate;
     
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<OrderItem> orderItems;
 
     // Shipping snapshot fields (denormalized for historical accuracy)

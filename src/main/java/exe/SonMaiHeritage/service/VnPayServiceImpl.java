@@ -90,7 +90,6 @@ public class VnPayServiceImpl implements VnPayService {
     @Override
     public VnPayResponse processPaymentReturn(Map<String, String> params) {
         String vnp_ResponseCode = params.get("vnp_ResponseCode");
-        String vnp_TransactionNo = params.get("vnp_TransactionNo");
         String vnp_TxnRef = params.get("vnp_TxnRef");
         
         if ("00".equals(vnp_ResponseCode)) {

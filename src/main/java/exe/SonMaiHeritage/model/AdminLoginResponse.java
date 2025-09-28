@@ -5,13 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class BasketResponse {
-    private String id;
-    private List<BasketItemResponse> items;
+@Builder
+public class AdminLoginResponse {
+    private boolean success;
+    private String username;
+    private String token;
+    private String message;
 }

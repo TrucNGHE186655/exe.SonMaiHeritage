@@ -49,7 +49,7 @@ public class Payment {
     @Column(name="updated_date")
     private LocalDateTime updatedDate;
     
-    @Column(name="payment_url")
+    @Column(name="payment_url",  columnDefinition = "TEXT")
     private String paymentUrl;
     
     public enum PaymentStatus {

@@ -17,15 +17,5 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(customErrorResponse, HttpStatus.NOT_FOUND);
     }
     
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Object> handleUserNotFoundException(UserNotFoundException ex, WebRequest request){
-        CustomErrorResponse customErrorResponse = new CustomErrorResponse(HttpStatus.NOT_FOUND, "User not found", ex.getMessage());
-        return new ResponseEntity<>(customErrorResponse, HttpStatus.NOT_FOUND);
-    }
-    
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<Object> handleUserAlreadyExistsException(UserAlreadyExistsException ex, WebRequest request){
-        CustomErrorResponse customErrorResponse = new CustomErrorResponse(HttpStatus.CONFLICT, "User already exists", ex.getMessage());
-        return new ResponseEntity<>(customErrorResponse, HttpStatus.CONFLICT);
-    }
+    // User exceptions đã được xóa vì không cần thiết cho guest system
 }
