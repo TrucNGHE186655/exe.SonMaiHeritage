@@ -36,6 +36,8 @@ public class ProductServiceImpl implements ProductService {
         return productResponse;
     }
 
+
+
     @Override
     public Page<ProductResponse> getProducts(Pageable pageable) {
         log.info("Fetching products");
@@ -43,6 +45,20 @@ public class ProductServiceImpl implements ProductService {
         Page<ProductResponse> productResponses = productPage
                 .map(this::convertToProductResponse);
         log.info("Fetched all products");
+        return productResponses;
+    }
+
+    @Override
+    public List<ProductResponse> getAllProducts() {
+        log.info("Fetching all products without paging or filters");
+
+        List<Product> products = productRepository.findAll();
+
+        List<ProductResponse> productResponses = products.stream()
+                .map(this::convertToProductResponse)
+                .toList();
+
+        log.info("Fetched {} products", productResponses.size());
         return productResponses;
     }
 

@@ -28,6 +28,12 @@ public class ProductController {
         return new ResponseEntity<>(productResponse, HttpStatus.OK);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<ProductResponse>> getAllProduct() {
+        List<ProductResponse> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
+    }
+
     @GetMapping()
     public ResponseEntity<Page<ProductResponse>> getProducts(
             @PageableDefault(size = 10)Pageable pageable,
