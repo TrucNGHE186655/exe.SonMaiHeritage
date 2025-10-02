@@ -1,5 +1,6 @@
 package exe.SonMaiHeritage.service;
 
+import exe.SonMaiHeritage.controller.OrderController;
 import exe.SonMaiHeritage.entity.Order;
 import exe.SonMaiHeritage.entity.OrderItem;
 import exe.SonMaiHeritage.entity.User;
@@ -7,6 +8,8 @@ import exe.SonMaiHeritage.model.CheckoutRequest;
 import exe.SonMaiHeritage.repository.OrderRepository;
 import exe.SonMaiHeritage.repository.UserRepository;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -87,5 +90,65 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
         log.info("Order status updated successfully");
+    }
+    
+    @Override
+    public Page<Order> getAllOrders(Pageable pageable) {
+        log.info("Retrieving all orders with pagination");
+        return orderRepository.findAll(pageable);
+    }
+    
+    @Override
+    public Order getOrderById(Integer orderId) {
+        log.info("Retrieving order by ID: {}", orderId);
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+    }
+    
+    @Override
+    public List<Order> getOrdersByUserId(Integer userId) {
+        log.info("Retrieving orders for user ID: {}", userId);
+        return orderRepository.findByUserId(userId);
+    }
+    
+    @Override
+    public List<Order> getOrdersByStatus(Order.OrderStatus status) {
+        log.info("Retrieving orders by status: {}", status);
+        return orderRepository.findByStatus(status);
+    }
+    
+    @Override
+    public List<Order> getPaidOrders() {
+        log.info("Retrieving paid orders");
+        return orderRepository.findPaidOrders();
+    }
+    
+    @Override
+    public Order updateOrderStatus(Integer orderId, Order.OrderStatus status) {
+        log.info("Updating order {} status to {}", orderId, status);
+        Order order = getOrderById(orderId);
+        order.setStatus(status);
+        order.setUpdatedDate(LocalDateTime.now());
+        return orderRepository.save(order);
+    }
+    
+    @Override
+    public OrderController.OrderStatistics getOrderStatistics() {
+        log.info("Calculating order statistics");
+        
+        long totalOrders = orderRepository.count();
+        long paidOrders = orderRepository.findPaidOrders().size();
+        long pendingOrders = orderRepository.countByStatus(Order.OrderStatus.PENDING);
+        long cancelledOrders = orderRepository.countByStatus(Order.OrderStatus.CANCELLED);
+        
+        Long totalRevenue = orderRepository.sumTotalRevenue();
+        
+        return new OrderController.OrderStatistics(
+                totalOrders,
+                paidOrders,
+                pendingOrders,
+                cancelledOrders,
+                totalRevenue != null ? totalRevenue : 0L
+        );
     }
 }

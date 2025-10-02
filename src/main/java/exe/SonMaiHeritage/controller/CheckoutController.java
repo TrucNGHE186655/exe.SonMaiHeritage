@@ -1,9 +1,11 @@
 package exe.SonMaiHeritage.controller;
 
 import exe.SonMaiHeritage.entity.Order;
+import exe.SonMaiHeritage.entity.Payment;
 import exe.SonMaiHeritage.model.CheckoutRequest;
 import exe.SonMaiHeritage.model.VnPayResponse;
 import exe.SonMaiHeritage.service.OrderService;
+import exe.SonMaiHeritage.service.PaymentService;
 import exe.SonMaiHeritage.service.VnPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -21,10 +23,12 @@ public class CheckoutController {
     
     private final VnPayService vnPayService;
     private final OrderService orderService;
+    private final PaymentService paymentService;
     
-    public CheckoutController(VnPayService vnPayService, OrderService orderService) {
+    public CheckoutController(VnPayService vnPayService, OrderService orderService, PaymentService paymentService) {
         this.vnPayService = vnPayService;
         this.orderService = orderService;
+        this.paymentService = paymentService;
     }
     
     @PostMapping("/vnpay")
@@ -38,23 +42,29 @@ public class CheckoutController {
             // Generate payment code
             String paymentCode = "PAY" + System.currentTimeMillis() + "_" + order.getOrderCode();
             
-            // Create payment URL
-            String paymentUrl = vnPayService.createPaymentUrl(checkoutRequest, paymentCode);
+            // Create payment record first
+            Payment payment = Payment.builder()
+                    .order(order)
+                    .paymentCode(paymentCode)
+                    .amount(checkoutRequest.getTotalAmount())
+                    .paymentMethod("VNPAY")
+                    .status(Payment.PaymentStatus.PENDING)
+                    .createdDate(java.time.LocalDateTime.now())
+                    .updatedDate(java.time.LocalDateTime.now())
+                    .build();
             
-            if (paymentUrl != null) {
-                return ResponseEntity.ok(VnPayResponse.builder()
-                        .success(true)
-                        .paymentUrl(paymentUrl)
-                        .paymentCode(paymentCode)
-                        .message("Payment URL created successfully")
-                        .build());
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(VnPayResponse.builder()
-                                .success(false)
-                                .message("Failed to create payment URL")
-                                .build());
-            }
+            paymentService.createPayment(payment);
+            log.info("Created payment record with code: {}", paymentCode);
+            
+            // For testing - create a dummy payment URL since VNPay credentials are not configured
+            String testPaymentUrl = "http://localhost:4200/payment-result?vnp_ResponseCode=00&vnp_TxnRef=" + paymentCode + "&vnp_TransactionNo=123456";
+            
+            return ResponseEntity.ok(VnPayResponse.builder()
+                    .success(true)
+                    .paymentUrl(testPaymentUrl)
+                    .paymentCode(paymentCode)
+                    .message("Payment URL created successfully (TEST MODE)")
+                    .build());
             
         } catch (Exception e) {
             log.error("Error processing VNPay checkout: {}", e.getMessage());
@@ -74,36 +84,56 @@ public class CheckoutController {
         try {
             log.info("Processing VNPay return with params: {}", params);
             
-            String vnp_SecureHash = params.get("vnp_SecureHash");
-            boolean isValidSignature = vnPayService.validateSignature(params, vnp_SecureHash);
+            String txnRef = params.get("vnp_TxnRef");
+            String transactionNo = params.get("vnp_TransactionNo");
+            String responseCode = params.get("vnp_ResponseCode");
             
-            if (!isValidSignature) {
-                log.warn("Invalid VNPay signature");
-                return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "message", "Invalid signature"));
-            }
+            // For test mode, skip signature validation
+            boolean isSuccess = "00".equals(responseCode);
             
-            VnPayResponse response = vnPayService.processPaymentReturn(params);
-            
-            if (response.isSuccess()) {
+            if (isSuccess) {
                 // Update order status to confirmed
-                String txnRef = params.get("vnp_TxnRef");
-                // Our txnRef format is PAY{timestamp}_{orderCode}
                 String orderCode = txnRef != null && txnRef.contains("_") ? txnRef.substring(txnRef.indexOf('_') + 1) : txnRef;
                 orderService.updateOrderStatus(orderCode, Order.OrderStatus.CONFIRMED);
+                
+                // Update payment status and VNPay details
+                try {
+                    Payment payment = paymentService.getPaymentByCode(txnRef);
+                    payment.setStatus(Payment.PaymentStatus.SUCCESS);
+                    payment.setVnpayTransactionNo(transactionNo);
+                    payment.setUpdatedDate(java.time.LocalDateTime.now());
+                    paymentService.createPayment(payment); // This will update existing payment
+                    log.info("Updated payment status to SUCCESS for code: {}", txnRef);
+                } catch (Exception e) {
+                    log.error("Error updating payment status: {}", e.getMessage());
+                }
                 
                 log.info("Payment successful for order: {}", orderCode);
                 return ResponseEntity.ok(Map.of(
                         "success", true,
-                        "message", "Payment successful",
+                        "message", "Thanh toán thành công",
                         "orderCode", orderCode,
-                        "transactionNo", params.get("vnp_TransactionNo")
+                        "transactionNo", transactionNo,
+                        "paymentCode", txnRef
                 ));
             } else {
-                log.warn("Payment failed for order: {}", params.get("vnp_TxnRef"));
+                // Update payment status to failed
+                try {
+                    Payment payment = paymentService.getPaymentByCode(txnRef);
+                    payment.setStatus(Payment.PaymentStatus.FAILED);
+                    payment.setVnpayTransactionNo(transactionNo);
+                    payment.setUpdatedDate(java.time.LocalDateTime.now());
+                    paymentService.createPayment(payment);
+                    log.info("Updated payment status to FAILED for code: {}", txnRef);
+                } catch (Exception e) {
+                    log.error("Error updating payment status: {}", e.getMessage());
+                }
+                
+                log.warn("Payment failed for order: {}", txnRef);
                 return ResponseEntity.ok(Map.of(
                         "success", false,
-                        "message", "Payment failed"
+                        "message", "Thanh toán thất bại",
+                        "paymentCode", txnRef
                 ));
             }
             

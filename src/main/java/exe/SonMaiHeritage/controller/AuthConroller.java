@@ -17,7 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:4200")
 public class AuthConroller {
     private final UserService userService;
     private final AuthenticationManager manager;
@@ -38,10 +39,12 @@ public class AuthConroller {
     public ResponseEntity<JwtResponse> login(@RequestBody JwtRequest request){
         this.authenticate(request.getUsername(), request.getPassword());
         UserDetails userDetails = userService.loadUserByUsername(request.getUsername());
+        UserResponse userResponse = userService.getUserByUsername(request.getUsername());
         String token = this.jwtHelper.generateToken(userDetails);
         JwtResponse response = JwtResponse.builder()
                 .username(userDetails.getUsername())
                 .token(token)
+                .user(userResponse)
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
